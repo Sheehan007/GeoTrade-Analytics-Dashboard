@@ -2,8 +2,6 @@
 
 GeoTrade-X is a DBMS-backed geopolitical trade analytics dashboard. It combines a MySQL schema, Express API, and Tailwind-powered frontend for monitoring regional geopolitical tension, article intelligence, market impact, watchlists, user trades, and role-based database views.
 
-Project extracted from [`Shreeya1-pixel/dbms`](https://github.com/Shreeya1-pixel/dbms) into this repository.
-
 ## Features
 
 - Role-based login and registration for admin, analyst, and viewer users.
@@ -69,7 +67,3 @@ The server seeds these default app users when the schema exists:
 | `admin` | `admin123` | admin |
 | `analyst1` | `pass123` | analyst |
 | `viewer1` | `pass123` | viewer |
-
-## Notes
-
-This project stores demo passwords in plain text because it is a DBMS class-style prototype. For production use, add password hashing, session management, input hardening, and least-privilege database credentials.
