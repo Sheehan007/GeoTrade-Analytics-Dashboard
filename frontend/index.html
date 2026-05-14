@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GeoTrade-X</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    body { background: #000; color: #e1e2eb; font-family: Inter, sans-serif; }
+    .panel { background: #14171f; border: 1px solid rgba(255,255,255,0.07); }
+    .muted { color: #94a3b8; }
+    .tab-active { color: #00daf3; }
+    .tab-idle { color: #64748b; }
+    .num-critical { color: #ff9f9a; }
+    .num-elevated { color: #ffbe63; }
+    .num-positive { color: #59e5ab; }
+    .num-negative { color: #ff8f86; }
+    .badge-critical { background: rgba(147, 0, 10, 0.35); color: #ffd9d3; }
+    .badge-elevated { background: rgba(238, 152, 0, 0.35); color: #ffd59d; }
+    .badge-low { background: rgba(0, 178, 123, 0.30); color: #7bffd0; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <div id="login-page" class="min-h-screen flex items-center justify-center px-4">
+    <div class="panel p-8 w-full max-w-sm space-y-5">
+      <div>
+        <h1 class="text-2xl font-black tracking-tight">GEOTRADE-X</h1>
+        <p class="text-[10px] muted uppercase tracking-[0.2em] mt-1">Sign in to continue</p>
+      </div>
+      <input id="login-username" type="text" placeholder="Username" class="w-full bg-black border border-white/10 rounded px-3 py-2 text-sm" />
+      <input id="login-password" type="password" placeholder="Password" class="w-full bg-black border border-white/10 rounded px-3 py-2 text-sm" />
+      <div class="flex gap-2 items-center">
+        <button id="login-btn" class="flex-1 bg-cyan-500 text-black font-semibold rounded px-3 py-2 text-sm">Login</button>
+        <button id="show-register-btn" class="flex-1 border border-white/10 rounded px-3 py-2 text-sm muted">Register</button>
+      </div>
+      <p id="login-status" class="text-xs muted"></p>
+
+      <div id="register-form" class="hidden space-y-3 border-t border-white/10 pt-4">
+        <p class="text-[10px] muted uppercase tracking-widest">New Account</p>
+        <input id="reg-username" type="text" placeholder="Username" class="w-full bg-black border border-white/10 rounded px-3 py-2 text-sm" />
+        <input id="reg-password" type="password" placeholder="Password" class="w-full bg-black border border-white/10 rounded px-3 py-2 text-sm" />
+        <select id="reg-role" class="w-full bg-black border border-white/10 rounded px-3 py-2 text-sm">
+          <option value="viewer">Viewer — Dashboard &amp; News only</option>
+          <option value="analyst">Analyst — All screens</option>
+          <option value="admin">Admin — All screens + Role panel</option>
+        </select>
+        <button id="register-btn" class="w-full bg-emerald-600 text-white font-semibold rounded px-3 py-2 text-sm">Create Account</button>
+        <p id="reg-status" class="text-xs muted"></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="app" class="hidden">
+  <header class="h-12 border-b border-white/10 bg-black/95 fixed top-0 left-0 right-0 z-50">
+    <div class="max-w-[1600px] h-full mx-auto px-6 flex items-center justify-between">
+      <h1 class="text-sm font-black tracking-tight">GEOTRADE-X</h1>
+      <nav id="main-nav" class="flex gap-7 text-[10px] uppercase font-semibold tracking-wide">
+        <button class="screen-tab tab-active" data-screen="dashboard">Dashboard</button>
+        <button class="screen-tab tab-idle" data-screen="news">News</button>
+        <button class="screen-tab tab-idle nav-analyst" data-screen="market">Market</button>
+        <button class="screen-tab tab-idle nav-analyst" data-screen="watchlist">Watchlist</button>
+        <button class="screen-tab tab-idle nav-analyst" data-screen="trades">Trades</button>
+        <button class="screen-tab tab-idle nav-admin" data-screen="tables">Tables</button>
+      </nav>
+      <div class="flex items-center gap-3">
+        <p id="logged-in-user" class="text-[9px] text-cyan-400 font-bold"></p>
+        <button id="logout-btn" class="text-[9px] text-slate-500 hover:text-white uppercase">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="pt-16 px-6 pb-10 max-w-[1600px] mx-auto">
+    <section id="screen-dashboard" class="screen space-y-3">
+      <div class="flex items-end justify-between">
+        <div>
+          <h2 class="text-3xl font-semibold">Geopolitical Tension Index</h2>
+          <p class="text-[10px] muted uppercase tracking-[0.2em]">Real-time Global Risk Matrix</p>
+        </div>
+      </div>
+      <div id="dashboard-cards" class="grid md:grid-cols-3 gap-3"></div>
+      <div class="grid lg:grid-cols-3 gap-3">
+        <div class="panel p-4 lg:col-span-2">
+          <h3 class="text-lg font-bold">Intelligence Terminal</h3>
+          <p class="text-[9px] muted uppercase tracking-[0.25em] mb-3">Signal Extraction v4.2</p>
+          <div class="overflow-auto">
+            <table class="w-full text-left">
+              <thead class="text-[9px] uppercase tracking-[0.2em] muted border-b border-white/10">
+                <tr><th class="py-2">Time</th><th>Brief</th><th class="text-center">Sentiment</th><th class="text-right">Severity</th></tr>
+              </thead>
+              <tbody id="dashboard-news"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="space-y-3">
+          <div class="panel p-3">
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="text-xs font-black uppercase tracking-widest">Market Impact</h3>
+              <span class="text-[9px] text-cyan-400">LIVE_TICKER</span>
+            </div>
+            <div id="dashboard-market" class="space-y-2 text-sm"></div>
+          </div>
+          <div class="panel p-0 overflow-hidden">
+            <div class="relative h-44">
+              <img
+                class="w-full h-full object-cover opacity-60"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZbd_h-K2Tp_-P8kp3t0-FY_4AJb_w_1L2AiKP3TinHN7NtPawyjuGbjNNyaokpCih-oaH-aZQsXI9hv8ReWPRF5tey5A52tky6HRaehLU-O-mR29EaPRLiRmCvSBCgzb3Wr-cX6S8tcj5ZeYC7-0ffOImNzNPU93ihvvgKTtjpQekEd9W7POJQxIbYtaOv6N9D8luzxKlipFtDibnZvn8kmeNDDNdZR7VB4luyNPpZMcw-XQwOGthRxDhaHQgr0W-sCLcShsA8FI"
+                alt="Global GTI Heatmap"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+              <div class="absolute left-4 bottom-3">
+                <p class="text-cyan-400 text-[11px] font-black uppercase tracking-[0.15em]">Active Surveillance</p>
+                <p class="text-[14px] font-semibold">Global GTI Heatmap</p>
+              </div>
+              <div class="absolute right-4 top-4 w-3 h-3 rounded-full bg-cyan-400"></div>
+            </div>
+          </div>
+          <div class="panel p-3">
+            <h3 class="text-xs font-black uppercase tracking-widest muted mb-2">Pinned Assets</h3>
+            <div id="dashboard-watchlist" class="space-y-1 text-xs"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-news" class="screen hidden panel p-4">
+      <h2 class="text-2xl font-semibold mb-1">News Screen</h2>
+      <p class="text-[10px] muted uppercase tracking-[0.2em] mb-4">Live article intelligence feed</p>
+      <div class="overflow-auto">
+        <table class="w-full text-left">
+          <thead class="text-[10px] uppercase tracking-[0.18em] muted border-b border-white/10">
+            <tr><th class="py-2">Published</th><th>Title</th><th>Region</th><th>Category</th><th>Sentiment</th><th class="text-right">Severity</th></tr>
+          </thead>
+          <tbody id="news-table"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="screen-market" class="screen hidden panel p-4">
+      <h2 class="text-2xl font-semibold mb-1">Market Screen</h2>
+      <p class="text-[10px] muted uppercase tracking-[0.2em] mb-4">Asset prices and impact direction</p>
+      <div id="market-grid" class="grid md:grid-cols-2 xl:grid-cols-3 gap-3"></div>
+    </section>
+
+    <section id="screen-watchlist" class="screen hidden panel p-4">
+      <h2 class="text-2xl font-semibold mb-1">Watchlist Screen</h2>
+      <p class="text-[10px] muted uppercase tracking-[0.2em] mb-4">User watchlist assets</p>
+      <form id="watchlist-form" class="panel p-3 mb-4 flex flex-wrap gap-2 items-end">
+        <div>
+          <label for="watchlist-id" class="block text-[10px] muted uppercase mb-1">Watchlist ID</label>
+          <input id="watchlist-id" type="number" min="1" class="bg-black border border-white/10 rounded px-2 py-1 text-sm" placeholder="1" required />
+        </div>
+        <div>
+          <label for="asset-name" class="block text-[10px] muted uppercase mb-1">Asset Name</label>
+          <input id="asset-name" type="text" class="bg-black border border-white/10 rounded px-2 py-1 text-sm" placeholder="Gold" required />
+        </div>
+        <button type="submit" class="bg-cyan-500 text-black font-semibold px-3 py-1 rounded text-sm">Add</button>
+        <p id="watchlist-form-status" class="text-xs muted"></p>
+      </form>
+      <div class="overflow-auto">
+        <table class="w-full text-left">
+          <thead class="text-[10px] uppercase tracking-[0.18em] muted border-b border-white/10">
+            <tr><th class="py-2">User</th><th>Watchlist</th><th>Symbol</th><th>Asset</th><th class="text-right">Price</th><th class="text-right">Timestamp</th></tr>
+          </thead>
+          <tbody id="watchlist-table"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="screen-tables" class="screen hidden panel p-4">
+      <h2 class="text-2xl font-semibold mb-1">Database Tables</h2>
+      <p class="text-[10px] muted uppercase tracking-[0.2em] mb-4">All GeoTradeX tables and values</p>
+      <div class="grid lg:grid-cols-2 gap-3 mb-4">
+        <div class="panel p-3">
+          <h3 class="text-sm font-bold mb-2">View: Region_Risk</h3>
+          <div class="overflow-auto max-h-56">
+            <table class="w-full text-left">
+              <thead class="text-[10px] uppercase tracking-[0.18em] muted border-b border-white/10">
+                <tr><th class="py-2">Region</th><th class="text-right">GTI</th><th class="text-right">Risk</th></tr>
+              </thead>
+              <tbody id="region-risk-body"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel p-3">
+          <h3 class="text-sm font-bold mb-2">Role / Grant</h3>
+          <pre id="role-grants-box" class="text-xs muted whitespace-pre-wrap">Loading...</pre>
+        </div>
+      </div>
+      <div class="flex gap-2 items-center mb-3">
+        <select id="table-select" class="bg-black border border-white/10 rounded px-2 py-1 text-sm"></select>
+        <button id="load-table-btn" class="bg-cyan-500 text-black font-semibold px-3 py-1 rounded text-sm">Load</button>
+      </div>
+      <div class="overflow-auto max-h-[65vh]">
+        <table class="w-full text-left">
+          <thead id="table-head" class="text-[10px] uppercase tracking-[0.18em] muted border-b border-white/10"></thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="screen-trades" class="screen hidden panel p-4">
+      <h2 class="text-2xl font-semibold mb-1">User Trades</h2>
+      <p class="text-[10px] muted uppercase tracking-[0.2em] mb-4">Store simple user trade inputs</p>
+      <form id="trade-form" class="panel p-3 mb-4 grid md:grid-cols-3 lg:grid-cols-4 gap-2">
+        <input id="trade-user-id" type="number" min="1" placeholder="User ID (optional)" class="bg-black border border-white/10 rounded px-2 py-1 text-sm" />
+        <input id="trade-user-name" type="text" placeholder="User Name (optional)" class="bg-black border border-white/10 rounded px-2 py-1 text-sm" />
+        <input id="trade-date" type="date" class="bg-black border border-white/10 rounded px-2 py-1 text-sm" required />
+        <input id="trade-type" type="text" placeholder="BUY / SELL" class="bg-black border border-white/10 rounded px-2 py-1 text-sm uppercase" required />
+        <input id="trade-asset" type="text" placeholder="Asset Name" class="bg-black border border-white/10 rounded px-2 py-1 text-sm" required />
+        <input id="trade-qty" type="number" step="0.01" placeholder="Quantity" class="bg-black border border-white/10 rounded px-2 py-1 text-sm" required />
+        <input id="trade-price" type="number" step="0.01" placeholder="Trade Price" class="bg-black border border-white/10 rounded px-2 py-1 text-sm" required />
+        <input id="trade-notes" type="text" placeholder="Notes (optional)" class="bg-black border border-white/10 rounded px-2 py-1 text-sm" />
+        <button type="submit" class="bg-cyan-500 text-black font-semibold px-3 py-1 rounded text-sm">Save Trade</button>
+        <p id="trade-form-status" class="text-xs muted col-span-full"></p>
+      </form>
+      <div class="overflow-auto">
+        <table class="w-full text-left">
+          <thead class="text-[10px] uppercase tracking-[0.18em] muted border-b border-white/10">
+            <tr>
+              <th class="py-2">Trade ID</th><th>User</th><th>Date</th><th>Type</th><th>Asset</th>
+              <th class="text-right">Qty</th><th class="text-right">Price</th><th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="trades-table"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const tabs = document.querySelectorAll(".screen-tab");
+    const screens = document.querySelectorAll(".screen");
+
+    function esc(value) {
+      return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+    }
+
+    function openScreen(name) {
+      screens.forEach((s) => s.classList.add("hidden"));
+      document.getElementById(`screen-${name}`).classList.remove("hidden");
+      tabs.forEach((t) => {
+        t.classList.toggle("tab-active", t.dataset.screen === name);
+        t.classList.toggle("tab-idle", t.dataset.screen !== name);
+      });
+    }
+
+    tabs.forEach((tab) => tab.addEventListener("click", () => openScreen(tab.dataset.screen)));
+
+    async function getJson(url) {
+      const res = await fetch(url);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Failed: ${url}`);
+      return data;
+    }
+
+    async function postJson(url, payload) {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Failed: ${url}`);
+      return data;
+    }
+
+    function sentimentColor(v) {
+      if (Number(v) > 0) return "num-positive";
+      if (Number(v) < 0) return "num-negative";
+      return "text-slate-300";
+    }
+
+    function riskVisuals(level, value) {
+      const l = String(level || "").toLowerCase();
+      if (l.includes("critical") || Number(value) >= 25) {
+        return { border: "border-rose-300", num: "num-critical", badge: "badge-critical" };
+      }
+      if (l.includes("high") || l.includes("elevated") || Number(value) >= 12) {
+        return { border: "border-amber-300", num: "num-elevated", badge: "badge-elevated" };
+      }
+      return { border: "border-emerald-300", num: "num-positive", badge: "badge-low" };
+    }
+
+    function severityColor(severity) {
+      const s = String(severity || "").toLowerCase();
+      if (s.includes("critical") || s.includes("high")) return "num-negative";
+      if (s.includes("medium") || s.includes("elevated")) return "num-elevated";
+      return "num-positive";
+    }
+
+    function directionColor(direction) {
+      const d = String(direction || "").toLowerCase();
+      if (d === "bullish") return "num-positive";
+      if (d === "bearish") return "num-negative";
+      return "text-slate-300";
+    }
+
+    async function loadDashboard() {
+      const d = await getJson("/api/dashboard");
+      document.getElementById("dashboard-cards").innerHTML = (d.regions || []).map((r) => `
+        ${(() => { const rv = riskVisuals(r.risk_level, r.index_value); return `
+        <div class="panel p-4 border-l ${rv.border}">
+          <div class="flex justify-between items-start mb-2">
+            <span class="text-[10px] uppercase muted font-bold">${esc(r.region_name)}</span>
+            <span class="text-[9px] px-2 py-0.5 rounded ${rv.badge}">${esc((r.risk_level || "N/A").toUpperCase())}</span>
+          </div>
+          <p class="text-4xl font-black ${rv.num}">${Number(r.index_value).toFixed(2)}</p>
+        </div>
+      `; })()}
+      `).join("") || `<div class="muted">No GTI data.</div>`;
+
+      document.getElementById("dashboard-news").innerHTML = (d.terminal || []).map((n) => `
+        <tr class="border-b border-white/5">
+          <td class="py-3 text-[11px] font-mono muted">${new Date(n.timestamp).toLocaleTimeString()}</td>
+          <td class="py-3"><div class="font-semibold">${esc(n.title)}</div><div class="text-[10px] muted uppercase">${esc(n.region_name)} • ${esc(n.category_name)}</div></td>
+          <td class="py-3 text-center font-semibold"><span class="text-[10px] px-2 py-0.5 rounded ${Number(n.sentiment) < 0 ? "badge-critical" : Number(n.sentiment) > 0 ? "badge-low" : "bg-white/10 text-slate-300"} ${sentimentColor(n.sentiment)}">${Number(n.sentiment).toFixed(2)}</span></td>
+          <td class="py-3 text-right text-[10px] uppercase font-bold ${severityColor(n.severity_name)}">${esc(n.severity_name)}</td>
+        </tr>
+      `).join("") || `<tr><td colspan="4" class="py-3 muted">No news rows.</td></tr>`;
+
+      document.getElementById("dashboard-market").innerHTML = (d.market || []).map((m) => `
+        <div class="flex justify-between">
+          <div><p class="font-semibold">${esc(m.asset_name)}</p><p class="text-[10px] uppercase muted">${esc(m.asset_symbol)}</p></div>
+          <div class="text-right"><p class="font-mono ${directionColor(m.direction)}">${Number(m.price_value).toFixed(2)}</p><p class="text-[10px] ${directionColor(m.direction)}">${esc(m.direction || "Neutral")}</p></div>
+        </div>
+      `).join("") || `<p class="muted">No market rows.</p>`;
+
+      document.getElementById("dashboard-watchlist").innerHTML = (d.watchlist || []).map((w) => `
+        <div class="flex justify-between border-b border-white/5 py-1">
+          <span class="font-mono">${esc(w.asset_symbol)}</span>
+          <span class="font-mono ${directionColor(w.direction)}">${Number(w.price_value).toFixed(2)}</span>
+        </div>
+      `).join("") || `<p class="muted">No watchlist rows.</p>`;
+    }
+
+    async function loadNews() {
+      const d = await getJson("/api/news");
+      document.getElementById("news-table").innerHTML = (d.rows || []).map((r) => `
+        <tr class="border-b border-white/5">
+          <td class="py-2 text-[11px] font-mono muted">${new Date(r.published_at).toLocaleString()}</td>
+          <td class="py-2">${esc(r.title)}</td>
+          <td class="py-2">${esc(r.region_name)}</td>
+          <td class="py-2">${esc(r.category_name)}</td>
+          <td class="py-2 ${sentimentColor(r.sentiment)}">${Number(r.sentiment).toFixed(2)}</td>
+          <td class="py-2 text-right uppercase text-[10px] ${severityColor(r.severity_name)}">${esc(r.severity_name)}</td>
+        </tr>
+      `).join("") || `<tr><td colspan="6" class="py-3 muted">No rows found.</td></tr>`;
+    }
+
+    async function loadMarket() {
+      const d = await getJson("/api/market");
+      document.getElementById("market-grid").innerHTML = (d.rows || []).map((r) => `
+        <div class="panel p-3">
+          <div class="flex justify-between items-start">
+            <div><p class="font-bold">${esc(r.asset_name)}</p><p class="text-[10px] uppercase muted">${esc(r.asset_symbol)}</p></div>
+            <span class="text-[10px] ${directionColor(r.direction)}">${esc(r.direction || "Neutral")}</span>
+          </div>
+          <p class="text-2xl font-black mt-3 ${directionColor(r.direction)}">${Number(r.price_value).toFixed(2)}</p>
+          <p class="text-[10px] muted mt-1">Volatility: ${r.predicted_volatility == null ? "N/A" : Number(r.predicted_volatility).toFixed(4)}</p>
+        </div>
+      `).join("") || `<p class="muted">No market rows found.</p>`;
+    }
+
+    async function loadWatchlist() {
+      const d = await getJson("/api/watchlist");
+      document.getElementById("watchlist-table").innerHTML = (d.rows || []).map((r) => `
+        <tr class="border-b border-white/5">
+          <td class="py-2">${esc(r.username)}</td>
+          <td class="py-2">${esc(r.watchlist_name)}</td>
+          <td class="py-2 font-mono">${esc(r.asset_symbol)}</td>
+          <td class="py-2">${esc(r.asset_name)}</td>
+          <td class="py-2 text-right font-mono ${directionColor(r.direction)}">${Number(r.price_value).toFixed(2)}</td>
+          <td class="py-2 text-right text-[11px] muted">${new Date(r.price_timestamp).toLocaleString()}</td>
+        </tr>
+      `).join("") || `<tr><td colspan="6" class="py-3 muted">No rows found.</td></tr>`;
+    }
+
+    const watchlistForm = document.getElementById("watchlist-form");
+    watchlistForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const status = document.getElementById("watchlist-form-status");
+      const watchlistId = Number(document.getElementById("watchlist-id").value);
+      const assetName = document.getElementById("asset-name").value.trim();
+
+      status.className = "text-xs muted";
+      status.textContent = "Saving...";
+
+      try {
+        await postJson("/api/watchlist-items", {
+          watchlist_id: watchlistId,
+          asset_name: assetName,
+        });
+        status.className = "text-xs num-positive";
+        status.textContent = "Added successfully";
+        watchlistForm.reset();
+        await loadWatchlist();
+        await loadDashboard();
+      } catch (error) {
+        status.className = "text-xs num-negative";
+        status.textContent = error.message;
+      }
+    });
+
+    async function loadTableNames() {
+      const d = await getJson("/api/tables");
+      const select = document.getElementById("table-select");
+      select.innerHTML = (d.tables || []).map((name) => `<option value="${esc(name)}">${esc(name)}</option>`).join("");
+      if (d.tables && d.tables.length) {
+        await loadTableData(d.tables[0]);
+      }
+    }
+
+    async function loadTableData(name) {
+      const d = await getJson(`/api/tables/${encodeURIComponent(name)}`);
+      const rows = d.rows || [];
+      const head = document.getElementById("table-head");
+      const body = document.getElementById("table-body");
+
+      if (!rows.length) {
+        head.innerHTML = "";
+        body.innerHTML = `<tr><td class="py-3 muted">No rows found in ${esc(name)}.</td></tr>`;
+        return;
+      }
+
+      const cols = Object.keys(rows[0]);
+      head.innerHTML = `<tr>${cols.map((c) => `<th class="py-2 pr-4">${esc(c)}</th>`).join("")}</tr>`;
+      body.innerHTML = rows.map((row) => `
+        <tr class="border-b border-white/5">
+          ${cols.map((c) => `<td class="py-2 pr-4 text-[12px]">${esc(row[c])}</td>`).join("")}
+        </tr>
+      `).join("");
+    }
+
+    async function loadTrades() {
+      const d = await getJson("/api/trades");
+      document.getElementById("trades-table").innerHTML = (d.rows || []).map((r) => `
+        <tr class="border-b border-white/5">
+          <td class="py-2">${esc(r.trade_id)}</td>
+          <td class="py-2">${esc(r.user_name)} (#${esc(r.user_id)})</td>
+          <td class="py-2">${esc(r.trade_date)}</td>
+          <td class="py-2">${esc(r.trade_type)}</td>
+          <td class="py-2">${esc(r.asset_name)}</td>
+          <td class="py-2 text-right">${Number(r.quantity).toFixed(2)}</td>
+          <td class="py-2 text-right">${Number(r.trade_price).toFixed(2)}</td>
+          <td class="py-2">${esc(r.notes || "")}</td>
+        </tr>
+      `).join("") || `<tr><td colspan="8" class="py-3 muted">No trades yet.</td></tr>`;
+    }
+
+    async function loadRegionRiskView() {
+      const d = await getJson("/api/region-risk");
+      document.getElementById("region-risk-body").innerHTML = (d.rows || []).map((r) => `
+        <tr class="border-b border-white/5">
+          <td class="py-2">${esc(r.region_name)}</td>
+          <td class="py-2 text-right">${Number(r.index_value).toFixed(2)}</td>
+          <td class="py-2 text-right ${severityColor(r.risk_level)}">${esc(r.risk_level)}</td>
+        </tr>
+      `).join("") || `<tr><td colspan="3" class="py-3 muted">No rows in Region_Risk view.</td></tr>`;
+    }
+
+    async function loadRoleGrants() {
+      const d = await getJson("/api/role-grants");
+      const roleText = (d.roleGrants || []).join("\n");
+      const userText = (d.userGrants || []).join("\n");
+      document.getElementById("role-grants-box").textContent =
+        `Role: ${d.role}\n${roleText}\n\nUser: ${d.user}\n${userText}`;
+    }
+
+    document.getElementById("load-table-btn").addEventListener("click", async () => {
+      const name = document.getElementById("table-select").value;
+      await loadTableData(name);
+    });
+
+    document.getElementById("trade-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const status = document.getElementById("trade-form-status");
+      status.className = "text-xs muted col-span-full";
+      status.textContent = "Saving...";
+
+      const payload = {
+        user_id: document.getElementById("trade-user-id").value || null,
+        user_name: document.getElementById("trade-user-name").value.trim(),
+        trade_date: document.getElementById("trade-date").value,
+        trade_type: document.getElementById("trade-type").value.trim(),
+        asset_name: document.getElementById("trade-asset").value.trim(),
+        quantity: document.getElementById("trade-qty").value,
+        trade_price: document.getElementById("trade-price").value,
+        notes: document.getElementById("trade-notes").value.trim(),
+      };
+
+      try {
+        await postJson("/api/trades", payload);
+        status.className = "text-xs num-positive col-span-full";
+        status.textContent = "Trade saved.";
+        document.getElementById("trade-form").reset();
+        await loadTrades();
+      } catch (error) {
+        status.className = "text-xs num-negative col-span-full";
+        status.textContent = error.message;
+      }
+    });
+
+    function applyRole(role) {
+      const analystTabs = document.querySelectorAll(".nav-analyst");
+      const adminTabs   = document.querySelectorAll(".nav-admin");
+      if (role === "viewer") {
+        analystTabs.forEach((el) => el.classList.add("hidden"));
+        adminTabs.forEach((el) => el.classList.add("hidden"));
+      } else if (role === "analyst") {
+        analystTabs.forEach((el) => el.classList.remove("hidden"));
+        adminTabs.forEach((el) => el.classList.add("hidden"));
+      } else if (role === "admin") {
+        analystTabs.forEach((el) => el.classList.remove("hidden"));
+        adminTabs.forEach((el) => el.classList.remove("hidden"));
+      }
+    }
+
+    function startApp(user) {
+      document.getElementById("login-page").classList.add("hidden");
+      document.getElementById("app").classList.remove("hidden");
+      document.getElementById("logged-in-user").textContent =
+        `${user.username.toUpperCase()} · ${user.role.toUpperCase()}`;
+      applyRole(user.role);
+
+      Promise.all([loadDashboard(), loadNews(), loadMarket(), loadWatchlist(), loadTableNames(), loadTrades(), loadRegionRiskView(), loadRoleGrants()])
+        .catch((e) => {
+          ["dashboard-news", "news-table", "market-grid", "watchlist-table", "dashboard-market", "dashboard-watchlist", "table-body", "trades-table", "region-risk-body", "role-grants-box"]
+            .forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) el.innerHTML = `<div class="text-rose-300">${esc(e.message)}</div>`;
+            });
+        });
+    }
+
+    document.getElementById("login-btn").addEventListener("click", async () => {
+      const status = document.getElementById("login-status");
+      const username = document.getElementById("login-username").value.trim();
+      const password = document.getElementById("login-password").value.trim();
+      status.textContent = "Signing in...";
+      status.className = "text-xs muted";
+      try {
+        const d = await postJson("/api/login", { username, password });
+        status.textContent = "";
+        startApp(d.user);
+      } catch (error) {
+        status.textContent = error.message;
+        status.className = "text-xs num-negative";
+      }
+    });
+
+    document.getElementById("show-register-btn").addEventListener("click", () => {
+      document.getElementById("register-form").classList.toggle("hidden");
+    });
+
+    document.getElementById("register-btn").addEventListener("click", async () => {
+      const status = document.getElementById("reg-status");
+      const username = document.getElementById("reg-username").value.trim();
+      const password = document.getElementById("reg-password").value.trim();
+      const role = document.getElementById("reg-role").value;
+      status.textContent = "Creating account...";
+      status.className = "text-xs muted";
+      try {
+        await postJson("/api/register", { username, password, role });
+        status.textContent = "Account created — you can now login.";
+        status.className = "text-xs num-positive";
+      } catch (error) {
+        status.textContent = error.message;
+        status.className = "text-xs num-negative";
+      }
+    });
+
+    document.getElementById("logout-btn").addEventListener("click", () => {
+      document.getElementById("app").classList.add("hidden");
+      document.getElementById("login-page").classList.remove("hidden");
+      document.getElementById("login-username").value = "";
+      document.getElementById("login-password").value = "";
+      document.getElementById("login-status").textContent = "";
+      openScreen("dashboard");
+    });
+  </script>
+  </div>
+</body>
+</html>

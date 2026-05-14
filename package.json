@@ -1,0 +1,14 @@
+{
+  "name": "geotradex",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "node backend/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mysql2": "^3.22.2"
+  }
+}
